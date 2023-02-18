@@ -15,14 +15,11 @@ class PQArray:
     """
 
     def __init__(self, nodes):
+        # Set all nodes = to infinity
         self.dist = [math.inf] * len(nodes)
-
-        # 0 if the node is not in the queue, change to 1 if it is
-        # self.q_array = [0] * len(nodes)
         self.q_array = set()
 
     def insert(self, node_index):
-        # self.q_array[node_index] = 1
         self.q_array.add(node_index)
         return
 
@@ -32,21 +29,23 @@ class PQArray:
 
     def delete_min(self):
 
-        # minimum is the index of the lowest node, not it's actual value
-        minimum = 0
+        # Note: minimum is the index of the lowest node, not it's value
+        minimum = None
         for i in range(len(self.dist)):
             # Check to see if it's in the PQ
             if i in self.q_array:
+
+                if minimum is None:
+                    minimum = i
+
                 # If in pq, compare the new node's value to the current minimum value. If lower, make curr
                 #   index the new minimum
                 if self.dist[i] < self.dist[minimum]:
                     minimum = i
-        # temp = self.dist[minimum]
-        # self.q_array[minimum] = 0
         temp = minimum
         self.q_array.remove(minimum)
 
-        # TODO: does this return the node or the index to the node? depends on the implementation of the other side
+        # We're returning the index here, not the node
         return temp
 
 
@@ -77,7 +76,9 @@ class HeapArray:
 
 class NetworkRoutingSolver:
     def __init__(self):
-        pass
+        self.prev_array = None
+        self.cost = None
+
 
     def initializeNetwork(self, network):
         assert (type(network) == CS312Graph)
@@ -87,18 +88,40 @@ class NetworkRoutingSolver:
         self.dest = destIndex
         # TODO: RETURN THE SHORTEST PATH FOR destIndex
         #       INSTEAD OF THE DUMMY SET OF EDGES BELOW
-        #       IT'S JUST AN EXAMPLE OF THE FORMAT YOU'LL 
+        #       IT'S JUST AN EXAMPLE OF THE FORMAT YOU'LL
         #       NEED TO USE
         path_edges = []
         total_length = 0
-        node = self.network.nodes[self.source]
-        edges_left = 3
-        while edges_left > 0:
-            edge = node.neighbors[2]
+        curr_node_index = destIndex
+
+        while True:
+
+            # Is this the only check we need, or do we need the lower two as well?
+            if self.prev_array[curr_node_index] is None:
+                return {'cost': math.inf, 'path': []}
+
+            prev_node = self.network.nodes[self.prev_array[curr_node_index]]
+            if prev_node.neighbors is None:
+                return {'cost': math.inf, 'path': []}
+
+            edge = None
+            for neighbor in prev_node.neighbors:
+                if neighbor.dest.node_id == curr_node_index:
+                    edge = neighbor
+                    break
+
+            if edge is None:
+                return {'cost': math.inf, 'path': []}
+
+            # Note: this returns a QT edge, not a 312GraphEdge
             path_edges.append((edge.src.loc, edge.dest.loc, '{:.0f}'.format(edge.length)))
+
             total_length += edge.length
-            node = edge.dest
-            edges_left -= 1
+
+            curr_node_index = prev_node.node_id
+            if edge.src.node_id == self.source:
+                break
+
         return {'cost': total_length, 'path': path_edges}
 
     def computeShortestPaths(self, srcIndex, use_heap=False):
@@ -116,7 +139,7 @@ class NetworkRoutingSolver:
         pq_array.__init__(self.network.nodes)
         pq_array.insert(srcIndex)
         pq_array.decrease_key(0, srcIndex)
-        prev_array = [None] * len(self.network.nodes)
+        self.prev_array = [None] * len(self.network.nodes)
         while pq_array.q_array:
             curr_min_node_index = pq_array.delete_min()
             curr_node = self.network.nodes[curr_min_node_index]
@@ -125,11 +148,9 @@ class NetworkRoutingSolver:
                         pq_array.dist[curr_min_node_index] + edge.length):
                     node_index = edge.dest.node_id
                     new_distance = pq_array.dist[curr_min_node_index] + edge.length
+                    pq_array.insert(node_index)
                     pq_array.decrease_key(new_distance, node_index)
-                    prev_array[edge.dest.node_id] = curr_min_node_index
-
-        # Need this call to return the shortest path to the GUI once we find it with Dijkstra's
-        # self.getShortestPath(destIndex=srcIndex):
+                    self.prev_array[edge.dest.node_id] = curr_min_node_index
 
         t2 = time.time()
         return (t2 - t1)
