@@ -17,10 +17,10 @@ class PQArray:
     def __init__(self, nodes):
         # Set all nodes = to infinity
         self.dist = [math.inf] * len(nodes)
-        self.q_array = set()
+        self.queue = set()
 
     def insert(self, node_index):
-        self.q_array.add(node_index)
+        self.queue.add(node_index)
         return
 
     def decrease_key(self, dist, node_index):
@@ -31,19 +31,19 @@ class PQArray:
 
         # Note: minimum is the index of the lowest node, not it's value
         minimum = None
-        for i in range(len(self.dist)):
-            # Check to see if it's in the PQ
-            if i in self.q_array:
 
-                if minimum is None:
-                    minimum = i
+        for node in self.queue:
 
-                # If in pq, compare the new node's value to the current minimum value. If lower, make curr
-                #   index the new minimum
-                if self.dist[i] < self.dist[minimum]:
-                    minimum = i
+            if minimum is None:
+                minimum = node
+
+            # If in pq, compare the new node's value to the current minimum value. If lower, make curr
+            #   index the new minimum
+            if self.dist[node] < self.dist[minimum]:
+                minimum = node
+
         temp = minimum
-        self.q_array.remove(minimum)
+        self.queue.remove(minimum)
 
         # We're returning the index here, not the node
         return temp
@@ -61,17 +61,17 @@ class HeapArray:
 
     def __init__(self, nodes):
         self.dist = [math.inf] * len(nodes)
-        self.q_heap = None
+        self.queue = None
         self.q_pointer = [-1] * len(nodes)
 
     def insert(self, node_index):
-        if self.q_heap is None:
-            self.q_heap = []
-            self.q_heap.append(node_index)
+        if self.queue is None:
+            self.queue = []
+            self.queue.append(node_index)
             self.q_pointer[node_index] = 0
         else:
-            new_index = len(self.q_heap)
-            self.q_heap.append(node_index)
+            new_index = len(self.queue)
+            self.queue.append(node_index)
             self.q_pointer[node_index] = new_index
 
             # These indexes point to where a node is on the heap
@@ -86,15 +86,15 @@ class HeapArray:
         parent_index = (child_index - 1) // 2
 
         while True:
-            if self.dist[self.q_heap[child_index]] > self.dist[self.q_heap[parent_index]]:
+            if self.dist[self.queue[child_index]] > self.dist[self.queue[parent_index]]:
 
                 # Switch where the pointer array points to them
-                self.q_pointer[self.q_heap[child_index]] = parent_index
-                self.q_pointer[self.q_heap[parent_index]] = child_index
+                self.q_pointer[self.queue[child_index]] = parent_index
+                self.q_pointer[self.queue[parent_index]] = child_index
 
                 # Then switch where they are in the heap
-                self.q_heap[child_index], self.q_heap[parent_index] = \
-                    self.q_heap[parent_index], self.q_heap[child_index]
+                self.queue[child_index], self.queue[parent_index] = \
+                    self.queue[parent_index], self.queue[child_index]
                 child_index = parent_index
                 parent_index = (child_index - 1) // 2
             else:
@@ -110,16 +110,16 @@ class HeapArray:
         return
 
     def delete_min(self):
-        min_index = self.q_heap[0]
+        min_index = self.queue[0]
 
-        if len(self.q_heap) == 1:
-            self.q_heap.pop()
+        if len(self.queue) == 1:
+            self.queue.pop()
             return min_index
 
         # Move the last element in the heap to the top, then delete it
-        last_index = len(self.q_heap) - 1
-        self.q_heap[0] = self.q_heap[last_index]
-        self.q_heap.pop(last_index)
+        last_index = len(self.queue) - 1
+        self.queue[0] = self.queue[last_index]
+        self.queue.pop(last_index)
 
         parent_index = 0
 
@@ -127,28 +127,28 @@ class HeapArray:
         while True:
             left_child_index = (parent_index * 2) + 1
             right_child_index = (parent_index * 2) + 2
-            if len(self.q_heap) <= left_child_index:
+            if len(self.queue) <= left_child_index:
                 return min_index
 
-            if self.dist[self.q_heap[parent_index]] > self.dist[self.q_heap[left_child_index]]:
+            if self.dist[self.queue[parent_index]] > self.dist[self.queue[left_child_index]]:
 
-                if len(self.q_heap) <= right_child_index:
+                if len(self.queue) <= right_child_index:
                     return min_index
 
-                if self.dist[self.q_heap[left_child_index]] > self.dist[self.q_heap[right_child_index]] and \
-                        len(self.q_heap) > right_child_index:
-                    self.q_pointer[self.q_heap[right_child_index]] = parent_index
-                    self.q_pointer[self.q_heap[parent_index]] = right_child_index
+                if self.dist[self.queue[left_child_index]] > self.dist[self.queue[right_child_index]] and \
+                        len(self.queue) > right_child_index:
+                    self.q_pointer[self.queue[right_child_index]] = parent_index
+                    self.q_pointer[self.queue[parent_index]] = right_child_index
 
-                    self.q_heap[right_child_index], self.q_heap[parent_index] = \
-                        self.q_heap[parent_index], self.q_heap[right_child_index]
+                    self.queue[right_child_index], self.queue[parent_index] = \
+                        self.queue[parent_index], self.queue[right_child_index]
                     parent_index = right_child_index
                 else:
-                    self.q_pointer[self.q_heap[left_child_index]] = parent_index
-                    self.q_pointer[self.q_heap[parent_index]] = left_child_index
+                    self.q_pointer[self.queue[left_child_index]] = parent_index
+                    self.q_pointer[self.queue[parent_index]] = left_child_index
 
-                    self.q_heap[left_child_index], self.q_heap[parent_index] = \
-                        self.q_heap[parent_index], self.q_heap[left_child_index]
+                    self.queue[left_child_index], self.queue[parent_index] = \
+                        self.queue[parent_index], self.queue[left_child_index]
                     parent_index = left_child_index
             else:
                 break
@@ -213,42 +213,28 @@ class NetworkRoutingSolver:
         #       ALSO, STORE THE RESULTS FOR THE SUBSEQUENT
         #       CALL TO getShortestPath(dest_index)
         #       Need to make new class members to store cost and shortest path
+
+
         if use_heap:
-            # heap implementation of Dijkstra's
-            pq_heap = HeapArray.__new__(HeapArray)
-            pq_heap.__init__(self.network.nodes)
-            pq_heap.insert(srcIndex)
-            pq_heap.decrease_key(0, srcIndex)
-            self.prev_array = [None] * len(self.network.nodes)
-            while pq_heap.q_heap:
-                curr_min_node_index = pq_heap.delete_min()
-                curr_node = self.network.nodes[curr_min_node_index]
-                for edge in curr_node.neighbors:
-                    if (pq_heap.dist[edge.dest.node_id] >
-                            pq_heap.dist[curr_min_node_index] + edge.length):
-                        node_index = edge.dest.node_id
-                        new_distance = pq_heap.dist[curr_min_node_index] + edge.length
-                        pq_heap.insert(node_index)
-                        pq_heap.decrease_key(new_distance, node_index)
-                        self.prev_array[edge.dest.node_id] = curr_min_node_index
+            pq = HeapArray.__new__(HeapArray)
         else:
-            # array implementation of Dijkstra's
-            pq_array = PQArray.__new__(PQArray)
-            pq_array.__init__(self.network.nodes)
-            pq_array.insert(srcIndex)
-            pq_array.decrease_key(0, srcIndex)
-            self.prev_array = [None] * len(self.network.nodes)
-            while pq_array.q_array:
-                curr_min_node_index = pq_array.delete_min()
-                curr_node = self.network.nodes[curr_min_node_index]
-                for edge in curr_node.neighbors:
-                    if (pq_array.dist[edge.dest.node_id] >
-                            pq_array.dist[curr_min_node_index] + edge.length):
-                        node_index = edge.dest.node_id
-                        new_distance = pq_array.dist[curr_min_node_index] + edge.length
-                        pq_array.insert(node_index)
-                        pq_array.decrease_key(new_distance, node_index)
-                        self.prev_array[edge.dest.node_id] = curr_min_node_index
+            pq = PQArray.__new__(PQArray)
+
+        pq.__init__(self.network.nodes)
+        self.prev_array = [None] * len(self.network.nodes)
+        pq.insert(srcIndex)
+        pq.decrease_key(0, srcIndex)
+        while pq.queue:
+            curr_min_node_index = pq.delete_min()
+            curr_node = self.network.nodes[curr_min_node_index]
+            for edge in curr_node.neighbors:
+                if (pq.dist[edge.dest.node_id] >
+                        pq.dist[curr_min_node_index] + edge.length):
+                    node_index = edge.dest.node_id
+                    new_distance = pq.dist[curr_min_node_index] + edge.length
+                    pq.insert(node_index)
+                    pq.decrease_key(new_distance, node_index)
+                    self.prev_array[edge.dest.node_id] = curr_min_node_index
 
         t2 = time.time()
         return t2 - t1
