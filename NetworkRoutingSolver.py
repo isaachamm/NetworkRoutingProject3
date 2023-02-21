@@ -33,7 +33,7 @@ class PQArray:
         minimum = None
 
         # We only need to compare the nodes in the queue
-        ''' Worst case O(logV) if we had to test every node '''
+        ''' Worst case O(V) if we had to test every node '''
         for node in self.queue:
 
             if minimum is None:
